@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MedRAG — Biomedical Literature Q&A</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="masthead">
+        <h1>Med<span>RAG</span></h1>
+        <p class="tagline">
+          Ask a biomedical question. Answers are drawn live from PubMed and
+          open-access literature, with a citation behind every claim.
+        </p>
+      </header>
+
+      <section class="ask">
+        <form id="ask-form">
+          <textarea
+            id="question"
+            rows="2"
+            placeholder="e.g. What is the role of amyloid-beta in Alzheimer's disease?"
+            required
+          ></textarea>
+          <div class="ask-row">
+            <button id="ask-btn" type="submit">Ask</button>
+            <span id="remaining" class="remaining"></span>
+          </div>
+        </form>
+      </section>
+
+      <section id="status" class="status hidden"></section>
+
+      <section id="sources" class="sources hidden">
+        <h2>Sources</h2>
+        <ol id="sources-list"></ol>
+      </section>
+
+      <section id="answer-wrap" class="answer hidden">
+        <h2>Answer</h2>
+        <div id="answer" class="answer-body"></div>
+      </section>
+
+      <footer class="foot">
+        <p>
+          Sources: PubMed abstracts · PubMed Central open access · Unpaywall.
+          Not medical advice.
+        </p>
+      </footer>
+    </main>
+
+    <script src="/app.js"></script>
+  </body>
+</html>
