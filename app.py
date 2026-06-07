@@ -10,7 +10,7 @@ import streamlit as st
 import config
 from medrag.rag import MedRAG
 
-st.set_page_config(page_title="MedRAG — Biomedical Literature Q&A", page_icon="🧠")
+st.set_page_config(page_title="MedRAG — Biomedical Literature Q&A")
 
 
 @st.cache_resource
@@ -24,7 +24,7 @@ def render_sources(sources: list[dict]) -> None:
     seen: dict[int, dict] = {}
     for src in sources:
         seen.setdefault(src["n"], src["metadata"])
-    with st.expander(f"📚 Sources ({len(seen)})", expanded=False):
+    with st.expander(f"Sources ({len(seen)})", expanded=False):
         for n in sorted(seen):
             meta = seen[n]
             line = f"**[{n}]** {meta.get('title', 'Untitled')}  \n{meta.get('citation', '')}"
@@ -34,7 +34,7 @@ def render_sources(sources: list[dict]) -> None:
             st.markdown(f"{line}  \n{' · '.join(links)}")
 
 
-st.title("🧠 MedRAG")
+st.title("MedRAG")
 st.caption(
     "Ask a biomedical question. MedRAG searches PubMed in real time, retrieves "
     "abstracts and open-access full text, and answers with cited sources."

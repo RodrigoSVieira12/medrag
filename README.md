@@ -1,4 +1,4 @@
-# 🧠 MedRAG — Biomedical Literature Q&A Assistant
+# MedRAG — Biomedical Literature Q&A Assistant
 
 MedRAG answers biomedical questions by retrieving and reasoning over real
 scientific papers from **PubMed**, in real time, with **inline citations** back
