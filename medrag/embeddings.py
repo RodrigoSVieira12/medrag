@@ -1,32 +1,29 @@
-"""Local sentence embeddings.
+"""Text embeddings via ChromaDB's built-in ONNX model.
 
-Uses sentence-transformers so there's no second paid API key to manage —
-embeddings run on your machine (CPU is fine for this scale). The model is
-loaded lazily and cached, since the first load downloads weights (~80MB).
+Uses the all-MiniLM-L6-v2 model that ships with ChromaDB, run through ONNX
+Runtime rather than PyTorch. Same embeddings, but a small fraction of the
+memory — PyTorch's ~1GB resident footprint is what blew past a 512MB host.
+The model (~80MB) downloads to a local cache on first use.
 """
 
 from __future__ import annotations
 
 from functools import lru_cache
 
-import config
-
 
 @lru_cache(maxsize=1)
-def _model():
-    # Imported lazily so `import medrag` stays cheap and doesn't pull torch
-    # until embeddings are actually needed.
-    from sentence_transformers import SentenceTransformer
+def _embedder():
+    # Imported lazily so `import medrag` stays cheap.
+    from chromadb.utils import embedding_functions
 
-    return SentenceTransformer(config.EMBEDDING_MODEL)
+    return embedding_functions.DefaultEmbeddingFunction()
 
 
 def embed(texts: list[str]) -> list[list[float]]:
     """Embed a batch of texts into a list of float vectors."""
     if not texts:
         return []
-    vectors = _model().encode(texts, normalize_embeddings=True, show_progress_bar=False)
-    return [v.tolist() for v in vectors]
+    return [list(map(float, vec)) for vec in _embedder()(texts)]
 
 
 def embed_one(text: str) -> list[float]:
