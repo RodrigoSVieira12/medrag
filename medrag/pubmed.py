@@ -8,6 +8,7 @@ full-text layer can pull open-access bodies where they exist.
 
 from __future__ import annotations
 
+import re
 import time
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
@@ -15,6 +16,32 @@ from dataclasses import dataclass, field
 import requests
 
 import config
+
+# Conversational filler + generic research words. PubMed ANDs every term, so
+# leaving these in ("can you find sources for ...") can drive results to zero.
+_STOPWORDS = {
+    "a", "an", "the", "and", "or", "of", "for", "to", "in", "on", "with",
+    "about", "regarding", "concerning", "from", "by", "as", "at", "into",
+    "i", "you", "we", "they", "it", "me", "my", "our", "your",
+    "what", "which", "who", "whom", "whose", "when", "where", "why", "how",
+    "is", "are", "was", "were", "be", "been", "do", "does", "did", "can",
+    "could", "would", "should", "will", "shall", "may", "might", "please",
+    "find", "search", "show", "give", "tell", "get", "need", "want", "looking",
+    "look", "source", "sources", "paper", "papers", "article", "articles",
+    "study", "studies", "research", "reference", "references", "information",
+    "info", "literature", "any", "some", "all", "more", "most", "related", "list",
+}
+
+
+def clean_query(text: str) -> str:
+    """Reduce a natural-language question to PubMed-friendly keyword terms.
+
+    Strips punctuation and conversational stopwords. If that leaves nothing
+    (e.g. a query made only of stopwords), returns the original text.
+    """
+    cleaned = re.sub(r"[^\w\s-]", " ", text)
+    tokens = [t for t in cleaned.split() if t.lower() not in _STOPWORDS]
+    return " ".join(tokens).strip() or text.strip()
 
 
 @dataclass
@@ -82,9 +109,21 @@ class PubMedClient:
 
     # -- public API -------------------------------------------------------
     def search(self, query: str, max_results: int = 10) -> list[str]:
-        """Return a list of PMIDs most relevant to `query`."""
+        """Return PMIDs most relevant to `query`.
+
+        Natural-language questions are reduced to keyword terms first (PubMed
+        ANDs every word, so filler kills recall). Falls back to the raw query
+        if the cleaned one finds nothing.
+        """
+        terms = clean_query(query)
+        pmids = self._esearch(terms, max_results)
+        if not pmids and terms.lower() != query.strip().lower():
+            pmids = self._esearch(query, max_results)
+        return pmids
+
+    def _esearch(self, term: str, max_results: int) -> list[str]:
         params = self._params(
-            term=query, retmax=str(max_results), retmode="json", sort="relevance"
+            term=term, retmax=str(max_results), retmode="json", sort="relevance"
         )
         data = self._get("esearch.fcgi", params).json()
         return data.get("esearchresult", {}).get("idlist", [])
