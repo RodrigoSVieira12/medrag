@@ -19,6 +19,10 @@ memory.
   (always free). It deliberately does **not** scrape paywalled content.
 - **Cited and verifiable.** Every claim carries an inline `[n]` citation linking
   to the PubMed record, so answers are auditable.
+- **Runs free and offline by default.** Answer generation uses a local model via
+  [Ollama](https://ollama.com) out of the box — no API key, no per-question cost.
+  Optionally switch to Claude (one config line) for higher quality when serving a
+  public site.
 - **Caches as it goes.** Papers are embedded once and persisted in a local
   vector store; popular topics get faster on repeat.
 
@@ -66,14 +70,28 @@ memory.
 Requires Python 3.10+.
 
 ```bash
-# 1. Install dependencies (first run downloads a small embedding model)
+# 1. Install Python dependencies (first run downloads a small embedding model)
 pip install -r requirements.txt
 
-# 2. Configure
+# 2. Install a local model with Ollama (free, no API key) — the default backend
+#    Install Ollama from https://ollama.com, then:
+ollama pull llama3.1
+
+# 3. Configure
 cp .env.example .env          # then edit .env
-#   - ANTHROPIC_API_KEY  (required)
 #   - CONTACT_EMAIL      (recommended; required for Unpaywall)
 #   - NCBI_API_KEY       (optional; raises PubMed rate limit)
+```
+
+### Answer-generation backend
+
+By default MedRAG generates answers with a **local Ollama model** — free,
+offline, no API key. To use **Claude** instead (higher quality; needed to serve
+a public website), set in `.env`:
+
+```bash
+MEDRAG_PROVIDER=anthropic
+ANTHROPIC_API_KEY=sk-ant-...
 ```
 
 ## Usage
@@ -108,6 +126,21 @@ a key (they use the site's single account). Usage is bounded by:
 
 The public default model is `claude-sonnet-4-6` (see `config.py`); set
 `MEDRAG_MODEL=claude-opus-4-8` in `.env` for higher-quality local testing.
+
+## Deploying the public site
+
+The repo includes a `render.yaml` blueprint and a `Procfile`. The deployed site
+uses the **Groq** free-tier backend (`MEDRAG_PROVIDER=groq`) — local Ollama can't
+serve a public URL. Steps:
+
+1. Push to GitHub.
+2. On [render.com](https://render.com): **New → Blueprint** → pick this repo.
+3. Set secrets in the dashboard: `GROQ_API_KEY` (free, from
+   [console.groq.com](https://console.groq.com/keys)) and `CONTACT_EMAIL`.
+
+> **Note:** the embedding stack (PyTorch + sentence-transformers) is memory-heavy.
+> A free 512 MB instance may be tight; if it runs out of memory, use a small paid
+> instance or switch the embeddings to an ONNX/CPU-light backend.
 
 ## A note on data sources
 

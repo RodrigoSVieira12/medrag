@@ -1,0 +1,21 @@
+# Render.com deployment blueprint for the MedRAG website.
+# Deploy: push to GitHub, then on render.com "New +" -> "Blueprint" -> pick this repo.
+# Set the secret values (GROQ_API_KEY, CONTACT_EMAIL) in the Render dashboard.
+services:
+  - type: web
+    name: medrag
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn server.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.9"
+      - key: MEDRAG_PROVIDER
+        value: groq
+      - key: MEDRAG_GROQ_MODEL
+        value: llama-3.3-70b-versatile
+      - key: GROQ_API_KEY
+        sync: false # set in the dashboard (secret)
+      - key: CONTACT_EMAIL
+        sync: false # your email, for Unpaywall/NCBI

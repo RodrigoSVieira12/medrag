@@ -47,14 +47,15 @@ with st.sidebar:
     top_k = st.slider("Context chunks", 3, 12, config.DEFAULT_TOP_K)
     use_full_text = st.toggle("Use open-access full text", value=True)
     st.divider()
-    st.caption(f"Model: `{config.MODEL}`")
+    st.caption(f"Provider: `{config.LLM_PROVIDER}`")
+    st.caption(f"Model: `{config.active_model()}`")
     st.caption(f"Embeddings: `{config.EMBEDDING_MODEL}`")
 
-# --- API key check -------------------------------------------------------
-if not config.ANTHROPIC_API_KEY:
+# --- Provider check ------------------------------------------------------
+if config.LLM_PROVIDER == "anthropic" and not config.ANTHROPIC_API_KEY:
     st.error(
-        "No `ANTHROPIC_API_KEY` found. Copy `.env.example` to `.env`, add your key, "
-        "and restart."
+        "Provider is `anthropic` but no `ANTHROPIC_API_KEY` is set. Add it to "
+        "`.env`, or set `MEDRAG_PROVIDER=ollama` to run locally for free."
     )
     st.stop()
 

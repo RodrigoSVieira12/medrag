@@ -25,12 +25,40 @@ CONTACT_EMAIL = os.getenv("CONTACT_EMAIL", "")
 NCBI_API_KEY = os.getenv("NCBI_API_KEY", "")
 
 # --- LLM -----------------------------------------------------------------
-# Public-site default is Sonnet 4.6 (good quality, ~6x cheaper than Opus).
-# For your own local testing, override with MEDRAG_MODEL=claude-opus-4-8 in .env.
-MODEL = os.getenv("MEDRAG_MODEL", "claude-sonnet-4-6")
-# Caps the size (and therefore cost) of any single answer. A grounded, cited
-# RAG answer rarely needs more than this; raise it only if answers get cut off.
+# Which engine generates answers:
+#   "ollama"    -> a model running locally on your machine. Free, no API key,
+#                  offline. Default for local dev. Can't serve a public site.
+#   "groq"      -> Llama hosted on Groq's free tier. Free, fast, no GPU to host.
+#                  Good for the public website. Rate-limited; needs GROQ_API_KEY.
+#   "anthropic" -> Claude via API. Highest quality; costs ~cents/question and
+#                  requires ANTHROPIC_API_KEY.
+LLM_PROVIDER = os.getenv("MEDRAG_PROVIDER", "ollama")
+
+# Ollama (local) settings.
+OLLAMA_MODEL = os.getenv("MEDRAG_OLLAMA_MODEL", "llama3.1")
+OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://localhost:11434")
+
+# Groq (hosted, free tier) settings — used only when LLM_PROVIDER="groq".
+# Free API key: https://console.groq.com/keys . If the model name ever changes,
+# pick a current one from the Groq console and set MEDRAG_GROQ_MODEL.
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+GROQ_MODEL = os.getenv("MEDRAG_GROQ_MODEL", "llama-3.3-70b-versatile")
+GROQ_BASE = "https://api.groq.com/openai/v1"
+
+# Anthropic (Claude) settings — used only when LLM_PROVIDER="anthropic".
+ANTHROPIC_MODEL = os.getenv("MEDRAG_MODEL", "claude-sonnet-4-6")
+
+# Caps the length (and, for paid providers, the cost) of any single answer.
 ANSWER_MAX_TOKENS = 1024
+
+
+def active_model() -> str:
+    """The model name in use for the current provider (for display)."""
+    return {
+        "ollama": OLLAMA_MODEL,
+        "groq": GROQ_MODEL,
+        "anthropic": ANTHROPIC_MODEL,
+    }.get(LLM_PROVIDER, LLM_PROVIDER)
 
 # --- Retrieval / embeddings ---------------------------------------------
 # all-MiniLM-L6-v2: small (~80MB), fast, strong general-purpose embeddings.
